@@ -3,4 +3,6 @@ A small project I'm working on. The goal is to create a packet sniffer that reco
 
 This is a project to help me gain better understanding of socket programming and Window application programming, so any help is appreciated.
 
-Contact: lraeprogramming@gmail.com
+I am currently using eel to run the application.
+
+Contacts: lraeprogramming@gmail.com
