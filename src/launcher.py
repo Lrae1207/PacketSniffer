@@ -1,4 +1,4 @@
 import eel
 
 eel.init("frontend")
-eel.start("main/main.html")
+eel.start("main.html")
