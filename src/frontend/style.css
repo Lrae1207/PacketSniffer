@@ -50,10 +50,18 @@
     height: 100vh;
     position: fixed;
     right: 0px;
+    top: 0px;
 }
 
-td, th {
+td, tr {
     background-color: rgb(255, 255, 255);
+    text-align: left;
+    padding: 2px;
+    color: #000;
+}
+
+tr:hover td {
+    background-color: #ebe18f;
     text-align: left;
     padding: 2px;
     color: #000;
@@ -115,9 +123,21 @@ td, th {
     to {opacity:1 ;}
 }
 
-/* Button  #4bc551 */
-button {
+/* Buttons  #4bc551 */
+.toggle {
     border: 3px solid #7e0000;
     background-color: #fff;
     color: #7e0000;
+}
+
+#clearData-button {
+    border: 3px solid #7e0000;
+    background-color: #fff;
+    color: #7e0000;
+}
+
+#clearData-button:hover {
+    border: 3px solid #e4d65a;
+    background-color: #fff;
+    color: #e4d65a;
 }

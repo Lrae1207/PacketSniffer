@@ -1,1 +1,2 @@
-
+Frontend:
+    Fix window section resizing

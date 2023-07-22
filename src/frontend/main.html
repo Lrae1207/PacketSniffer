@@ -3,79 +3,63 @@
     <head>
         <link rel="stylesheet" type="text/css" href="style.css"/>
         <title>Insert App Name Here</title>
+        <script type="text/javascript" src="/eel.js"></script>
+        <script type="text/javascript" src="main.js"></script>
     </head>
     <body>
         <div id="content-container">
             <div class="section-container" id="mainfeed">
-                <h3 class="title">Data Table</h3>
+                <h2 class="title">Data Table</h2>
                 <table id="feedtable">
                     <!-- placeholder text-->
                     <tr>
-                        <td>#</td>
-                        <td>Source</td>
-                        <td>Dest</td>
-                        <td>Content</td>
+                        <th>#</th>
+                        <th>Source</th>
+                        <th>Dest</th>
+                        <th>Size(b)</th>
+                        <th>Content</th>
+                        <th>Protocol</th>
                     </tr>
                     <tr>
                         <td>1</td>
                         <td>127.0.0.1</td>
                         <td>127.0.0.1</td>
+                        <td>0</td>
+                        <td>null</td>
                         <td>null</td>
                     </tr>
-                    <tr>
-                        <td>1</td>
-                        <td>127.0.0.1</td>
-                        <td>127.0.0.1</td>
-                        <td>null</td>
-                    </tr>
-                    <tr>
-                        <td>1</td>
-                        <td>127.0.0.1</td>
-                        <td>127.0.0.1</td>
-                        <td>null</td>
-                    </tr>
-                    <tr>
-                        <td>1</td>
-                        <td>127.0.0.1</td>
-                        <td>127.0.0.1</td>
-                        <td>null</td>
-                    </tr>
-                    <tr>
-                        <td>1</td>
-                        <td>127.0.0.1</td>
-                        <td>127.0.0.1</td>
-                        <td>null</td>
-                    </tr>
-                    <tr>
-                        <td>1</td>
-                        <td>127.0.0.1</td>
-                        <td>127.0.0.1</td>
-                        <td>null</td>
-                    </tr>
-                    </table>
+                </table>
             </div>
             <div class="section-container" id="uinterface">
-                <h3 class="title">Capture Settings</h3>
-                <button id="capturebutton" onclick="toggleCapture()" onmouseenter="captureMouseover()" onmouseleave="captureMouseleave()">Start Capture</button>
+                <h2 class="title">Capture Settings</h2>
+                <button class="toggle" id="capturebutton" onclick="toggleCapture()" onmouseenter="captureMouseover()" onmouseleave="captureMouseleave()">Start Capture</button>
                 <div class="popup" onclick="togglePopup('capture-popup')"> &#9432;
-                    <span class="popuptext" id="capture-popup">Toggle capture of traffic via chosen method</span>
+                    <span class="popuptext" id="capture-popup">Toggle capture of traffic via chosen method.</span>
                 </div>
                 <br><br>
-                <div class="same-line">
-                    <label>Media:</label>
-                    <select name="media" id="media-choice">
-                        <optgroup label="Wifi">
-                        </optgroup>
-                        <optgroup label="Loopback">
-                            <option value="localhost">Localhost</option>
-                        </optgroup>
-                    </select>
+                <label>Media:</label>
+                <select name="media" id="media-choice">
+                    <optgroup label="Wifi">
+                    </optgroup>
+                    <optgroup label="Loopback">
+                        <option value="localhost">Localhost</option>
+                    </optgroup>
+                </select>
+                <div class="popup" onclick="togglePopup('media-popup')"> &#9432;
+                    <span class="popuptext" id="media-popup">Choose capture media. Ex. wifi network, localhost...</span>
                 </div>
+                <br><br>
+                <div>
+                    <input type="file"></input>
+                    <button id="loadFile-button" onclick="loadSelectedFile()">Load File</button>
+                    <button id="clearData-button" onclick="clearData()">Clear Data</button>
+                </div>
+                <a id="savelink" href="../data/data.csv" download="networkdata">Save .csv file</a>
+                <br><br>
             </div>
         </div>
         <div class="section-container" id="log">
-            <h3>Log</h3>
+            <h2>Log</h2>
         </div>
-        <script src="main.js" type="text/javascript"></script>
     </body>
 </html>

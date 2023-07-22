@@ -41,5 +41,11 @@ elif sys == "Darwin": # I think this is what a mac OS is detected as
 else: # Unsupported OS
     print("OS not supported")
 
-datafile = open("data.csv", "r")
+datafile = open("data.csv", "w+")
+
+@eel.expose
+def clear_data():
+    datafile.truncate(0)
+    datafile.write("src,dest,msgproc,size,payload\n")
+
 datafile.close()
