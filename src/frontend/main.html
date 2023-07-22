@@ -5,15 +5,77 @@
         <title>Insert App Name Here</title>
     </head>
     <body>
-        <div class="section-container" id="mainfeed">
-            <table id="feedtable">
-                <tr>
-                    <td>#</td>
-                    <td>Source</td>
-                    <td>Dest</td>
-                    <td>Content</td>
-                </tr>
-            </table>
+        <div id="content-container">
+            <div class="section-container" id="mainfeed">
+                <h3 class="title">Data Table</h3>
+                <table id="feedtable">
+                    <!-- placeholder text-->
+                    <tr>
+                        <td>#</td>
+                        <td>Source</td>
+                        <td>Dest</td>
+                        <td>Content</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>127.0.0.1</td>
+                        <td>127.0.0.1</td>
+                        <td>null</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>127.0.0.1</td>
+                        <td>127.0.0.1</td>
+                        <td>null</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>127.0.0.1</td>
+                        <td>127.0.0.1</td>
+                        <td>null</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>127.0.0.1</td>
+                        <td>127.0.0.1</td>
+                        <td>null</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>127.0.0.1</td>
+                        <td>127.0.0.1</td>
+                        <td>null</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>127.0.0.1</td>
+                        <td>127.0.0.1</td>
+                        <td>null</td>
+                    </tr>
+                    </table>
+            </div>
+            <div class="section-container" id="uinterface">
+                <h3 class="title">Capture Settings</h3>
+                <button id="capturebutton" onclick="toggleCapture()" onmouseenter="captureMouseover()" onmouseleave="captureMouseleave()">Start Capture</button>
+                <div class="popup" onclick="togglePopup('capture-popup')"> &#9432;
+                    <span class="popuptext" id="capture-popup">Toggle capture of traffic via chosen method</span>
+                </div>
+                <br><br>
+                <div class="same-line">
+                    <label>Media:</label>
+                    <select name="media" id="media-choice">
+                        <optgroup label="Wifi">
+                        </optgroup>
+                        <optgroup label="Loopback">
+                            <option value="localhost">Localhost</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
         </div>
+        <div class="section-container" id="log">
+            <h3>Log</h3>
+        </div>
+        <script src="main.js" type="text/javascript"></script>
     </body>
 </html>
