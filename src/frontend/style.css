@@ -8,5 +8,10 @@
 }
 
 #mainfeed {
-    background-color: black;
+    background-color: white;
+}
+
+#feedtable {
+    border-color: black;
+    background-color: white;
 }
