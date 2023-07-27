@@ -4,7 +4,6 @@
         <link rel="stylesheet" type="text/css" href="style.css"/>
         <title>Insert App Name Here</title>
         <script type="text/javascript" src="/eel.js"></script>
-        <script type="text/javascript" src="main.js"></script>
     </head>
     <body>
         <div id="content-container">
@@ -50,7 +49,7 @@
                 </div>
                 <br><br>
                 <div>
-                    <input type="file"></input>
+                    <input id="filetoload" type="file"></input>
                     <button id="loadFile-button" onclick="loadSelectedFile()">Load File</button>
                     <button id="clearData-button" onclick="clearData()">Clear Data</button>
                 </div>
@@ -244,7 +243,7 @@ function captureMouseleave() {
 }
 
 // Feedtable functionality
-var feedtable = getElementById('feedtable');
+var feedtable = document.getElementById('feedtable');
 var dataIndex = 1;
 // Creates new tr element and create 5 td as the children of the tr.
 // The text values of the td elements are assigned a part of the json data.
@@ -278,21 +277,36 @@ function clearData() {
     if (confirm("Are you sure you want to clear all the data?")) {
         feedtable.innerHTML = "<tr>\n<th>#</th>\n<th>Source</th>\n<th>Dest</th>\n<th>Size(b)</ th>\n<th>Content</th>\n<th>Protocol</th>\n</tr>";
         eel.clear_data();
+        displayLog("Data cleared.");
     }
 }
 
+var loadFileInput = document.getElementById('filetoload');
 function loadSelectedFile() {
+    var filename = loadFileInput.value;
+    if (filename != null) {    
+        displayLog(`Attempting to open ${filename}...`);
 
+        // Make sure its a .csv file
+        if (filename.substr(filename.length - 4) != ".csv") {
+            alert(`File ${filename} is of an invalid type. Please only select .csv files.`);
+        }
+    } else {
+        alert("No file selected.");
+    }
+}
+async function getFile(filename) {
+    eel.get_file(filename);
 }
 
 // Display a message to the user
 var logEl = document.getElementById('log-section');
 function displayLog(msg) {
-    console.log(logEl);
     var el = document.createElement('p');
     el.innerText = msg;
     logEl.appendChild(el);
 }
         </script>
+        <script type="text/javascript" src="main.js"></script>
     </body>
 </html>

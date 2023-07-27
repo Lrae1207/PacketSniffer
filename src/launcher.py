@@ -19,6 +19,7 @@ import eel
 import platform
 import subprocess
 import time
+import os.path
 
 eel.init("frontend")
 eel.start("main.html")
@@ -48,4 +49,8 @@ def clear_data():
     datafile.truncate(0)
     datafile.write("src,dest,msgproc,size,payload\n")
 
+@eel.expose
+def get_file(filename):
+    if os.path.isfile(filename):
+        
 datafile.close()
