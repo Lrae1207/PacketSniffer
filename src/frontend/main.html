@@ -61,5 +61,237 @@
         <div class="section-container" id="log">
             <h2>Log</h2>
         </div>
+        <style>
+            * {
+    background-color: #fff;
+    color:black;
+}
+
+.section-container {
+    border: 2px solid #000;
+    overflow: auto;
+}
+
+.same-line {
+    display: flex;
+}
+
+#content-container {
+    display: table;
+    position: fixed;
+    left: 0px;
+    right: 2px;
+    bottom: 2px;
+    top: 0px
+}
+
+/* Table */
+#feedtable {
+    border-color: 2px solid #000;
+    background-color: #000;
+    width: 100%;
+}
+
+/* Section specifics */
+#mainfeed {
+    resize: vertical;
+    border: 3px groove #000;
+    height: 100%;
+    min-height: 30vh;
+    max-height: 80vh;
+    width: 70vw;
+}
+
+#uinterface {
+    border: 3px groove #000;
+    height: 100vh;
+    width: 70vw;
+}
+
+#log {
+    border: 3px groove #000;
+    width: 30vw;
+    height: 100vh;
+    position: fixed;
+    right: 0px;
+    top: 0px;
+}
+
+td, tr {
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    padding: 2px;
+    color: #000;
+}
+
+tr:hover td {
+    background-color: #ebe18f;
+    text-align: left;
+    padding: 2px;
+    color: #000;
+}
+
+/* Popup */
+.popup {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* popup span */
+.popup .popuptext {
+    visibility: hidden;
+    width: 160px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -80px;
+}
+
+/* arrow */
+.popup .popuptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-top: 2px;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+.popup .show {
+    visibility: visible;
+    -webkit-animation: fadeIn 2s;
+    animation: fadeIn 2s;
+}
+
+@-webkit-keyframes fadeIn {
+    from {opacity: 0;} 
+    to {opacity: 1;}
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity:1 ;}
+}
+
+/* Buttons  #4bc551 */
+.toggle {
+    border: 3px solid #7e0000;
+    background-color: #fff;
+    color: #7e0000;
+}
+
+#clearData-button {
+    border: 3px solid #7e0000;
+    background-color: #fff;
+    color: #7e0000;
+}
+
+#clearData-button:hover {
+    border: 3px solid #e4d65a;
+    background-color: #fff;
+    color: #e4d65a;
+}
+        </style>
+        <script>
+            var infoPopup;
+
+function togglePopup(id) {
+    document.getElementById(id).classList.toggle('show');
+}
+
+
+// Capture button functionality
+var capturing = false;
+var captureButton = document.getElementById('capturebutton');
+function toggleCapture() {
+    capturing = !capturing;
+    if (capturing) {
+        captureButton.style.color = "#4bc551";
+        captureButton.style.borderColor = "#4bc551";
+        displayLog("Starting capture...");
+    } else {
+        captureButton.style.color = "#7e0000";
+        captureButton.style.borderColor = "#7e0000";
+        displayLog("Stopping capture...");
+    }
+}
+function captureMouseover() {
+    captureButton.style.color = "#e4d65a";
+    captureButton.style.borderColor = "#e4d65a";
+}
+function captureMouseleave() {
+    if (capturing) {
+        captureButton.style.color = "#4bc551";
+        captureButton.style.borderColor = "#4bc551";
+    } else {
+        captureButton.style.color = "#7e0000";
+        captureButton.style.borderColor = "#7e0000";
+    }
+}
+
+// Feedtable functionality
+var feedtable = getElementById('feedtable');
+var dataIndex = 1;
+// Creates new tr element and create 5 td as the children of the tr.
+// The text values of the td elements are assigned a part of the json data.
+function addData(json) {
+    dataIndex++;
+    var tr = document.createElement("tr");
+    var num = document.createElement("td");
+    num.innerText = dataIndex;
+    var src = document.createElement("td");
+    src.innerText = json.src;
+    var siz = document.createElement("td");
+    siz.innerText = json.packetSize;
+    var des = document.createElement("td");
+    des.innerText = json.des;
+    var con = document.createElement("td");
+    con.innerText = json.payload;
+    var proc = document.createElement("td");
+    proc.innerText = json.proc;
+
+    tr.appendChild(num);
+    tr.appendChild(src);
+    tr.appendChild(des);
+    tr.appendChild(siz);
+    tr.appendChild(con);
+    tr.appendChild(proc);
+
+    feedtable.appendChild(tr);
+}
+
+function clearData() {
+    if (confirm("Are you sure you want to clear all the data?")) {
+        feedtable.innerHTML = "<tr>\n<th>#</th>\n<th>Source</th>\n<th>Dest</th>\n<th>Size(b)</ th>\n<th>Content</th>\n<th>Protocol</th>\n</tr>";
+        eel.clear_data();
+    }
+}
+
+function loadSelectedFile() {
+
+}
+
+// Display a message to the user
+var logEl = document.getElementById('log');
+function displayLog(msg) {
+    var nel = document.createElement('p');
+    nel.innerText = msg;
+    logEl.appendChild(nel);
+}
+        </script>
     </body>
 </html>
