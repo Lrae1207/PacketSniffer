@@ -58,7 +58,7 @@
                 <br><br>
             </div>
         </div>
-        <div class="section-container" id="log">
+        <div class="section-container" id="log-section">
             <h2>Log</h2>
         </div>
         <style>
@@ -108,7 +108,7 @@
     width: 70vw;
 }
 
-#log {
+#log-section {
     border: 3px groove #000;
     width: 30vw;
     height: 100vh;
@@ -286,11 +286,12 @@ function loadSelectedFile() {
 }
 
 // Display a message to the user
-var logEl = document.getElementById('log');
+var logEl = document.getElementById('log-section');
 function displayLog(msg) {
-    var nel = document.createElement('p');
-    nel.innerText = msg;
-    logEl.appendChild(nel);
+    console.log(logEl);
+    var el = document.createElement('p');
+    el.innerText = msg;
+    logEl.appendChild(el);
 }
         </script>
     </body>
