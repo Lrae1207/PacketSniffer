@@ -206,12 +206,21 @@ tr:hover td {
 }
         </style>
         <script>
-            var infoPopup;
+
+document.onload = () => {
+    setInterval(updateInterfaces(),10000);
+}
+
+async function updateInterfaces() {
+    let interfaces = await eel.get_interface_names();
+    // Fill in the options for the interface dropdown
+}
+
+var infoPopup;
 
 function togglePopup(id) {
     document.getElementById(id).classList.toggle('show');
 }
-
 
 // Capture button functionality
 var capturing = false;
@@ -222,10 +231,12 @@ function toggleCapture() {
         captureButton.style.color = "#4bc551";
         captureButton.style.borderColor = "#4bc551";
         displayLog("Starting capture...");
+        eel.start_capture();
     } else {
         captureButton.style.color = "#7e0000";
         captureButton.style.borderColor = "#7e0000";
         displayLog("Stopping capture...");
+        eel.stop_capture();
     }
 }
 function captureMouseover() {
@@ -274,7 +285,7 @@ function addData(json) {
 }
 
 function clearData() {
-    if (confirm("Are you sure you want to clear all the data?")) {
+    if (confirm("Are you sure you want to clear all the data? It will not be saved")) {
         feedtable.innerHTML = "<tr>\n<th>#</th>\n<th>Source</th>\n<th>Dest</th>\n<th>Size(b)</ th>\n<th>Content</th>\n<th>Protocol</th>\n</tr>";
         eel.clear_data();
         displayLog("Data cleared.");
@@ -302,13 +313,24 @@ function loadSelectedFile() {
     }
 }
 
-var dataEntries = [];
 // Attempt to get the file using exposed python functions
 // Returns success as bool
+// Note: if an error occurs maybe switch the argument position to the second call
 async function getFile(filename) {
     let data = await eel.get_file(filename)();
     if (data != null) {
-        dataEntries = [];
+        feedtable.innerHTML = "<tr>\n<th>#</th>\n<th>Source</th>\n<th>Dest</th>\n<th>Size(b)</ th>\n<th>Content</th>\n<th>Protocol</th>";
+        for (var i = 0; i < data.length; ++i) {
+            // There is prolly an easier way to do this with creating elements
+            if (i == data.length-1) {
+                feedtable.innerHTML += "</tr>";
+            }
+            if (i % 6 == 0 && i != data.length-1) {
+                feedtable.innerHTML += "</tr><tr>";
+            } else {
+                feedtable.innerHTML += `<td>${data[i]}</td>`;
+            }
+        }
         return true;
     }
     return false;

@@ -18,55 +18,37 @@
 import eel
 import platform
 import subprocess
-import time
+import psutil
 import os.path
+import pandas as pd
 
 eel.init("frontend")
 eel.start("main.html")
 
 # Check OS and find appropriate host lists
-# This is done mostly to find localhost
 sys = platform.system()
-if sys == "Windows":
-    hostfile = open("C:/Windows/System32/Drivers/etc/hosts", "r")
-    # subprocess.check_call("start {compiled cpp file}")
-    hostfile.close()
-elif sys == "Linux":
-    hostfile = open("/etc/hosts", "r")
-    # subprocess.check_call("./{compiled cpp file}")
-    hostfile.close()
-elif sys == "Darwin": # I think this is what a mac OS is detected as
-    hostfile = open("/private/etc/hosts", "r")
-    # subprocess.check_call(idk ill figure it out later)
-    hostfile.close()
-else: # Unsupported OS
-    print("OS not supported")
 
 datafile = open("data/data.csv", "w+")
 
 # helper functions
 
 # partially parses by seperating each data entry into an individual element in the list 
-def parse_csv(raw_data):
-    parsed_data = []
-    for line in raw_data:
-        item = ""
-        inquotes = False
-        for i in range(0,len(line)-1):
-            char = line[i]
+def parse_csv(filename):
+    entries = []
+    data = pd.read_csv(filename)
 
-            # if the current character is a double quotation and the next is a comma, the next character after the comma will be the first of the next item
-            inquotes = char == "\"" and (len(line) > i + 1 and line[i+1] != ",") or (char != "\"" and (len(line) > i + 1 and line[i+1] != ","))
-
-            if char == "," and not inquotes: # means there is a new data item
-                parsed_data.append(item)
-                item = ""
-            else:
-                item += char
-
-    return parsed_data
-                
-        
+    # Check formatting
+    headers = list(data)
+    if headers[0] != "src" or headers[1] != "dest" or headers[2] != "msgproc" or headers[3] != "size" or headers[4] != "payload":
+        return None
+    
+    for row in data.index:
+        entries.append(data["src"][row])
+        entries.append(data["dest"][row])
+        entries.append(data["msgproc"][row])
+        entries.append(data["size"][row])
+        entries.append(data["payload"][row])
+    return entries
 
 # exposed functions called by javascript
 @eel.expose
@@ -84,4 +66,29 @@ def get_file(filename):
         return parse_csv(datafile.readlines())
     return None
 
+@eel.expose
+def get_interface_names():
+    return list(psutil.net_if_addrs().keys())
+
+@eel.expose
+def start_capture():
+    if sys == "Windows":
+        hostfile = open("C:/Windows/System32/Drivers/etc/hosts", "r")
+        # subprocess.check_call("start {compiled cpp file}")
+        hostfile.close()
+    elif sys == "Linux":
+        hostfile = open("/etc/hosts", "r")
+        # subprocess.check_call("./{compiled cpp file}")
+        hostfile.close()
+    elif sys == "Darwin": # I think this is what a mac OS is detected as
+        hostfile = open("/private/etc/hosts", "r")
+        # subprocess.check_call(idk ill figure it out later)
+        hostfile.close()
+    else: # Unsupported OS
+        print("OS not supported")
+
+@eel.expose 
+def stop_capture():
+    print("placeholder")
+    
 datafile.close()
