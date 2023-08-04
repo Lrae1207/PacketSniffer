@@ -29,21 +29,46 @@ eel.start("main.html")
 sys = platform.system()
 if sys == "Windows":
     hostfile = open("C:/Windows/System32/Drivers/etc/hosts", "r")
-    #subprocess.check_call("start {compiled cpp file}")
+    # subprocess.check_call("start {compiled cpp file}")
     hostfile.close()
 elif sys == "Linux":
     hostfile = open("/etc/hosts", "r")
-    #subprocess.check_call("./{compiled cpp file}")
+    # subprocess.check_call("./{compiled cpp file}")
     hostfile.close()
 elif sys == "Darwin": # I think this is what a mac OS is detected as
     hostfile = open("/private/etc/hosts", "r")
-    #subprocess.check_call(idk ill figure it out later)
+    # subprocess.check_call(idk ill figure it out later)
     hostfile.close()
 else: # Unsupported OS
     print("OS not supported")
 
 datafile = open("data/data.csv", "w+")
 
+# helper functions
+
+# partially parses by seperating each data entry into an individual element in the list 
+def parse_csv(raw_data):
+    parsed_data = []
+    for line in raw_data:
+        item = ""
+        inquotes = False
+        for i in range(0,len(line)-1):
+            char = line[i]
+
+            # if the current character is a double quotation and the next is a comma, the next character after the comma will be the first of the next item
+            inquotes = char == "\"" and (len(line) > i + 1 and line[i+1] != ",") or (char != "\"" and (len(line) > i + 1 and line[i+1] != ","))
+
+            if char == "," and not inquotes: # means there is a new data item
+                parsed_data.append(item)
+                item = ""
+            else:
+                item += char
+
+    return parsed_data
+                
+        
+
+# exposed functions called by javascript
 @eel.expose
 def clear_data():
     datafile.truncate(0)
@@ -52,5 +77,11 @@ def clear_data():
 @eel.expose
 def get_file(filename):
     if os.path.isfile(filename):
-        
+        # Close old data file
+        datafile.close()
+        # Open new data file
+        datafile = open(filename, "w+")
+        return parse_csv(datafile.readlines())
+    return None
+
 datafile.close()

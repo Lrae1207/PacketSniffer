@@ -285,18 +285,33 @@ var loadFileInput = document.getElementById('filetoload');
 function loadSelectedFile() {
     var filename = loadFileInput.value;
     if (filename != null) {    
-        displayLog(`Attempting to open ${filename}...`);
 
         // Make sure its a .csv file
         if (filename.substr(filename.length - 4) != ".csv") {
             alert(`File ${filename} is of an invalid type. Please only select .csv files.`);
+        } else {
+            displayLog(`Attempting to open ${filename}...`);
+            if (getFile(filename)) {
+                displayLog(`Successfully loaded ${filename}.`);
+            } else {
+                displayLog(`Failed loading ${filename}.`);
+            }
         }
     } else {
         alert("No file selected.");
     }
 }
+
+var dataEntries = [];
+// Attempt to get the file using exposed python functions
+// Returns success as bool
 async function getFile(filename) {
-    eel.get_file(filename);
+    let data = await eel.get_file(filename)();
+    if (data != null) {
+        dataEntries = [];
+        return true;
+    }
+    return false;
 }
 
 // Display a message to the user
