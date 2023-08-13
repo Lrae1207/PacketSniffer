@@ -14,3 +14,5 @@ struct interface {
 };
 
 std::vector<interface> getInterfaces();
+std::string selectInterface();
+void startCapture(interface interf, int maxCaptures);
