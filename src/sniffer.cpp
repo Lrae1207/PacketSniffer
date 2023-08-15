@@ -1,8 +1,8 @@
 //\usr\include\x86_64-linux-gnu\bits\socket.h
 //\usr\include\linux\if_arp.h
 //https://upload.wikimedia.org/wikipedia/commons/3/37/Netfilter-packet-flow.svg
-#include <iostream>
 #include "sniffer.hpp"
+#include "colors.hpp"
 #include <fstream>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -11,6 +11,7 @@
 #include <netpacket/packet.h>
 #include <cstring>
 #include <pcap/pcap-int.h>
+#include <iostream>
 
 // Output handling
 
@@ -74,7 +75,7 @@ struct ether_data getEtherData(u_char *args, const struct pcap_pkthdr* pkthdr, c
 
 void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     static int pckt_num = 0;
-    std::cout << pckt_num << "\t";
+    std::cout << YELLOW << pckt_num << "\t";
     if (h_pcap->bufsize > 0) {
         std::cout << h_pcap->buffer;
     } else {
@@ -83,7 +84,7 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
     
     struct ether_data edata = getEtherData(args, pkthdr, packet);
 
-    std::cout << "\t" << edata.src << "\t" << edata.dest;
+    std::cout << "\t" << GREEN << edata.src << RED << "\t" << edata.dest << RESET;
     
     if(edata.type == ETHERTYPE_IP) {
         /* handle IP packet */
@@ -211,7 +212,7 @@ int main(int argc, char *argv[]) {
             } else if (user_input == "select") {
                 interfaceName = selectInterface(&selectedInterf);
             } else if(user_input == "start_cap") {
-                startCapture(selectedInterf, 1000);
+                startCapture(selectedInterf, 10000);
             } else if (user_input == "help") {
                 std::cout << "help - displays this message\ninterfaces - displays and resets interfaces\nexit - exits program\nselect - select new interface\nstart_cap - begin capturing packets through the selected interface\n";
             } else {    // No valid input detected
