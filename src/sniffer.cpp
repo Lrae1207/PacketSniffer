@@ -1,5 +1,6 @@
-//http://yuba.stanford.edu/~casado/pcap/section1.html
-//https://dev.to/fmtweisszwerg/cc-how-to-get-all-interface-addresses-on-the-local-device-3pki
+//\usr\include\x86_64-linux-gnu\bits\socket.h
+//\usr\include\linux\if_arp.h
+//https://upload.wikimedia.org/wikipedia/commons/3/37/Netfilter-packet-flow.svg
 #include <iostream>
 #include "sniffer.hpp"
 #include <fstream>
@@ -7,9 +8,13 @@
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <errno.h>
+#include <netpacket/packet.h>
+#include <cstring>
+#include <pcap/pcap-int.h>
 
+// Output handling
 
-// Functionality:
+// Packet capture functionality:
 std::vector<interface> getInterfaces() {
     std::vector<interface> interfaces;
     struct ifaddrs* p_iffirst;
@@ -24,7 +29,8 @@ std::vector<interface> getInterfaces() {
             interf.sa_family = addr_family;
             // IPv4
             if (addr_family == AF_INET) {
-                interf.name += "_v4";
+                interf.psuedonym = p_ifaddr->ifa_name;
+                interf.psuedonym += "_v4";
                 if (p_ifaddr->ifa_addr != nullptr) {
                     inet_ntop(addr_family,&((struct sockaddr_in*)(p_ifaddr->ifa_addr))->sin_addr, interf.ip_4, INET_ADDRSTRLEN);
                 }
@@ -33,7 +39,8 @@ std::vector<interface> getInterfaces() {
                 }
                 interfaces.push_back(interf);
             } else if (addr_family == AF_INET6) {
-                interf.name += "_v6";
+                interf.psuedonym = p_ifaddr->ifa_name;
+                interf.psuedonym += "_v6";
                 if (p_ifaddr->ifa_addr != nullptr) {
                     inet_ntop(addr_family,&((struct sockaddr_in6*)(p_ifaddr->ifa_addr))->sin6_addr, interf.ip_6, INET6_ADDRSTRLEN);
                 }
@@ -41,45 +48,65 @@ std::vector<interface> getInterfaces() {
                     inet_ntop(addr_family,&((struct sockaddr_in6*)(p_ifaddr->ifa_netmask))->sin6_addr, interf.nmsk_6, INET6_ADDRSTRLEN);
                 }
                 interfaces.push_back(interf);
+            } else if (addr_family == AF_PACKET) {
+                interf.psuedonym = p_ifaddr->ifa_name;
+                interf.psuedonym += "_pk";
+                interfaces.push_back(interf);
             }
         }
     }
     return interfaces;
 }
-/*
-struct pcap {
-    int fd;
-    int snapshot;
-    int linktype;
-    int tzoff;
-    int offset;
 
-    struct pcap_sf sf;
-    struct pcap_md md;
+pcap_t *h_pcap;
+
+struct ether_data getEtherData(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet)
+{
+    struct ether_header *p_eth = (struct ether_header *) packet;
+    struct ether_data edata;
+
+    edata.src = ether_ntoa((const struct ether_addr *)&p_eth->ether_shost);
+    edata.dest = ether_ntoa((const struct ether_addr *)&p_eth->ether_shost);
+    edata.type = p_eth->ether_type;
+
+    return edata;
+}
+
+void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
+    static int pckt_num = 0;
+    std::cout << pckt_num << "\t";
+    if (h_pcap->bufsize > 0) {
+        std::cout << h_pcap->buffer;
+    } else {
+        std::cout << "NULL";
+    }
     
-    int bufsize;
-    u_char *buffer;
-    u_char *bp;
-    int cc;
-     
-    u_char *pkt;
+    struct ether_data edata = getEtherData(args, pkthdr, packet);
 
-    struct bpf_program fcode;
+    std::cout << "\t" << edata.src << "\t" << edata.dest;
+    
+    if(edata.type == ETHERTYPE_IP) {
+        /* handle IP packet */
+    } else if(edata.type == ETHERTYPE_ARP) {
+        /* handle arp packet */
+    } else if(edata.type == ETHERTYPE_REVARP) {
+        /* handle reverse arp packet */
+    }
 
+    std::cout << "\n";
+
+    ++pckt_num;
+}
+
+void startCapture(struct interface interf, int maxCaptures) {
     char errbuf[PCAP_ERRBUF_SIZE];
-};
-*/
-void startCapture(interface interf, int maxCaptures) {
-    char errbuf[PCAP_ERRBUF_SIZE];
-    u_char *packet;
-    pcap_t *desc = pcap_open_live(&interf.name,BUFSIZ,0,-1,errbuf);
-    if (desc == NULL) {
-        perror("pcap_open_live()");
+    h_pcap = pcap_open_live(interf.name.c_str(),BUFSIZ,0,-1,errbuf);
+    if (h_pcap == NULL) {
+        std::cout << "pcap_open_live():" << errbuf;
         exit(1);
     }
-    for (int i = 0; i < maxCaptures; ++i) {
-
-    }
+    pcap_loop(h_pcap, maxCaptures, capture_callback, NULL);
+    std::cout << "Max captures reached." << "\n";
 }
 
 // Input loop helper functions
@@ -89,17 +116,19 @@ void exitProgram() {
 }
 
 // Input loop functions:
-std::string selectInterface(std::vector<interface> *p_interfaces) {
+std::string selectInterface(struct interface *p_interfaces) {
     std::cout << "Searching for interfaces...\n";
-    std::vector<interface> availInterfaces;
-    availInterfaces = getInterfaces();
+    std::vector<interface> availInterfaces = getInterfaces();
+    struct interface selectedInterf;
 
     for (int i = 0; i < availInterfaces.size(); ++i) {
-        interface interf = availInterfaces[i];
+        struct interface interf = availInterfaces[i];
         if (interf.sa_family == AF_INET) { // IPv4 address
-            std::cout << "\tInterface \"" << interf.name << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
-        } else {    // Must be IPv6
-            std::cout << "\tInterface \"" << interf.name << "\":\n\t\t" << "Ipv6: " << interf.ip_6 << ",\n\t\tNetmask: " << interf.nmsk_6 << "\n";
+            std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
+        } else if (interf.sa_family == AF_INET6) { // IPv6 address
+            std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv6: " << interf.ip_6 << ",\n\t\tNetmask: " << interf.nmsk_6 << "\n";
+        } else if (interf.sa_family == AF_PACKET) {
+            std::cout << "\tInterface \"" << interf.psuedonym << "\":\n";
         }
     }
 
@@ -111,22 +140,25 @@ std::string selectInterface(std::vector<interface> *p_interfaces) {
         std::cout << "Please select a valid interface\n>>";
         std::cin >> user_input;
         for (int i = 0; i < availInterfaces.size(); ++i) {
-            isSelected = user_input == availInterfaces[i].name  || isSelected;
+            isSelected = user_input == availInterfaces[i].psuedonym  || isSelected;
+            if (availInterfaces[i].psuedonym == user_input) {
+                selectedInterf = availInterfaces[i];
+            }
         }
 
         if (user_input == "exit") {
             exitProgram();
         } else if (!isSelected && user_input == "interfaces") {
             std::cout << "Searching for interfaces...\n";
-            std::vector<interface> availInterfaces;
+            std::vector<struct interface> availInterfaces;
             availInterfaces = getInterfaces();
 
             for (int i = 0; i < availInterfaces.size(); ++i) {
-                interface interf = availInterfaces[i];
+                struct interface interf = availInterfaces[i];
                 if (interf.sa_family == AF_INET) { // IPv4 address
-                    std::cout << "\tInterface \"" << interf.name << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
+                    std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
                 } else {    // Must be IPv6
-                    std::cout << "\tInterface \"" << interf.name << "\":\n\t\t" << "Ipv6: " << interf.ip_6 << ",\n\t\tNetmask: " << interf.nmsk_6 << "\n";
+                    std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv6: " << interf.ip_6 << ",\n\t\tNetmask: " << interf.nmsk_6 << "\n";
                 }
             }
         } else if (!isSelected && user_input != "interfaces") {
@@ -134,7 +166,7 @@ std::string selectInterface(std::vector<interface> *p_interfaces) {
         }
     }
     std::cout << "Interface: " << user_input << " selected.\n";
-    *p_interfaces = availInterfaces;
+    *p_interfaces = selectedInterf;
     return user_input;
 }
 
@@ -147,22 +179,14 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "This program was made by github user Lrae1207 @ https://github.com/Lrae1207. I can be contacted via e-mail lraeprogramming@gmail.com. Thank you for using this little project of mine.\n\n";
 
-    std::vector<interface> interfaces;
-
-    std::string interfaceName = selectInterface(&interfaces);
-    interface selectedInterf;
-
-    for (int i = 0; i < interfaces.size(); ++i) {
-        if (interfaces[i].name == interfaceName) {
-            selectedInterf = interfaces[i];
-        }
-    }
+    struct interface selectedInterf;
+    std::string interfaceName = selectInterface(&selectedInterf);
 
     bool running = true;
 
     while (running) {
-        if (interfaces.size() == 0 || &selectedInterf == nullptr || interfaceName == "") {
-            interfaceName = selectInterface(&interfaces);
+        if (&selectedInterf == nullptr || interfaceName == "") {
+            interfaceName = selectInterface(&selectedInterf);
         } else {
             std::cout << interfaceName << ">>";
             std::string user_input;
@@ -173,11 +197,11 @@ int main(int argc, char *argv[]) {
                 exitProgram();
             } else if (user_input == "interfaces") {
                 std::cout << "Searching for interfaces...\n";
-                std::vector<interface> availInterfaces;
+                std::vector<struct interface> availInterfaces;
                 availInterfaces = getInterfaces();
 
                 for (int i = 0; i < availInterfaces.size(); ++i) {
-                    interface interf = availInterfaces[i];
+                    struct interface interf = availInterfaces[i];
                     if (interf.sa_family == AF_INET) { // IPv4 address
                         std::cout << "\tInterface \"" << interf.name << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
                     } else {    // Must be IPv6
@@ -185,19 +209,16 @@ int main(int argc, char *argv[]) {
                     }
                 }
             } else if (user_input == "select") {
-                interfaceName = selectInterface(&interfaces);
-                for (int i = 0; i < interfaces.size(); ++i) {
-                    if (interfaces[i].name == interfaceName) {
-                        selectedInterf = interfaces[i];
-                    }
-                }
+                interfaceName = selectInterface(&selectedInterf);
+            } else if(user_input == "start_cap") {
+                startCapture(selectedInterf, 1000);
             } else if (user_input == "help") {
-                std::cout << "help - displays this message\ninterfaces - displays and resets interfaces\nexit - exits program\nselect - select new interface\n";
+                std::cout << "help - displays this message\ninterfaces - displays and resets interfaces\nexit - exits program\nselect - select new interface\nstart_cap - begin capturing packets through the selected interface\n";
             } else {    // No valid input detected
                 std::cout << "Enter \"help\" for more info\n";
             }
         }
     }
 
-    exit(0);
+    return 0;
 }
