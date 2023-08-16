@@ -18,7 +18,9 @@ struct interface {
 };
 
 struct ether_data {
-    char *src;
-    char *dest;
+    std::string src;
+    std::string dest;
     u_int16_t type;
 };
+
+void printClamped(std::string buffer, int n, std::string color);
