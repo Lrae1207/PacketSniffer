@@ -15,7 +15,28 @@
 
 // Output handling
 
+// Print n characters of buffer and fill any remaining space with ' 's
+void printClamped(std::string buffer, int n, std::string color) {
+    std::cout << color;
+    for (int i = 0; i < n; ++i) {
+        if (i < buffer.size()) {
+            std::cout << buffer[i];
+        } else {
+            std::cout << ' ';
+        }
+    }
+    std::cout << RESET;
+}
+
+void printHeaders() {
+    printClamped("Index", 10 , BLUE);
+    printClamped("MAC-source", 20 , BLUE);
+    printClamped("MAC-destination", 20 , BLUE);
+}
+
 // Packet capture functionality:
+
+// Put list of interfaces in a vector and return it
 std::vector<interface> getInterfaces() {
     std::vector<interface> interfaces;
     struct ifaddrs* p_iffirst;
@@ -72,19 +93,18 @@ struct ether_data getEtherData(u_char *args, const struct pcap_pkthdr* pkthdr, c
 
     return edata;
 }
-
+#include<unistd.h> 
 void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     static int pckt_num = 0;
-    std::cout << YELLOW << pckt_num << "\t";
-    if (h_pcap->bufsize > 0) {
-        std::cout << h_pcap->buffer;
-    } else {
-        std::cout << "NULL";
-    }
+    std::cout << "\r";
+    printClamped(std::to_string(pckt_num), 10, YELLOW);
     
     struct ether_data edata = getEtherData(args, pkthdr, packet);
 
-    std::cout << "\t" << GREEN << edata.src << RED << "\t" << edata.dest << RESET;
+    printClamped(edata.src, 20, GREEN);
+    printClamped(edata.dest, 20, RED);
+
+
     
     if(edata.type == ETHERTYPE_IP) {
         /* handle IP packet */
@@ -93,8 +113,6 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
     } else if(edata.type == ETHERTYPE_REVARP) {
         /* handle reverse arp packet */
     }
-
-    std::cout << "\n";
 
     ++pckt_num;
 }
@@ -106,6 +124,8 @@ void startCapture(struct interface interf, int maxCaptures) {
         std::cout << "pcap_open_live():" << errbuf;
         exit(1);
     }
+    printHeaders();
+    std::cout << "\n";
     pcap_loop(h_pcap, maxCaptures, capture_callback, NULL);
     std::cout << "Max captures reached." << "\n";
 }
