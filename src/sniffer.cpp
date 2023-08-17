@@ -33,6 +33,18 @@ void printHeaders() {
     printClamped("MAC-source", 20 , BLUE);
     printClamped("MAC-destination", 20 , BLUE);
     printClamped("Ethernet Type", 20 , BLUE);
+    printClamped("IP-Source", 20, BLUE);
+    printClamped("IP-Destination",20, BLUE);
+    printClamped("Packet length",10, BLUE);
+}
+
+
+std::string compileString(u_char chr[], size_t n) {
+    std::string str = "";
+    for (int i = 0; i < n; ++i) {
+        str += chr[n];
+    }
+    return str;
 }
 
 // Packet capture functionality:
@@ -41,7 +53,7 @@ void printHeaders() {
 std::vector<interface> getInterfaces() {
     std::vector<interface> interfaces;
     struct ifaddrs* p_iffirst;
-    
+
     if (getifaddrs(&p_iffirst) == 0) {
         for (struct ifaddrs* p_ifaddr = p_iffirst; p_ifaddr != nullptr; p_ifaddr = p_ifaddr->ifa_next) {
             interface interf;
@@ -50,8 +62,8 @@ std::vector<interface> getInterfaces() {
             
             sa_family_t addr_family = p_ifaddr->ifa_addr->sa_family;
             interf.sa_family = addr_family;
-            // IPv4
-            if (addr_family == AF_INET) {
+
+            if (addr_family == AF_INET) { // IPv4
                 interf.psuedonym = p_ifaddr->ifa_name;
                 interf.psuedonym += "_v4";
                 if (p_ifaddr->ifa_addr != nullptr) {
@@ -61,7 +73,7 @@ std::vector<interface> getInterfaces() {
                     inet_ntop(addr_family,&((struct sockaddr_in*)(p_ifaddr->ifa_netmask))->sin_addr, interf.nmsk_4, INET_ADDRSTRLEN);
                 }
                 interfaces.push_back(interf);
-            } else if (addr_family == AF_INET6) {
+            } else if (addr_family == AF_INET6) { // IPv6
                 interf.psuedonym = p_ifaddr->ifa_name;
                 interf.psuedonym += "_v6";
                 if (p_ifaddr->ifa_addr != nullptr) {
@@ -70,10 +82,6 @@ std::vector<interface> getInterfaces() {
                 if (p_ifaddr->ifa_netmask != nullptr) {
                     inet_ntop(addr_family,&((struct sockaddr_in6*)(p_ifaddr->ifa_netmask))->sin6_addr, interf.nmsk_6, INET6_ADDRSTRLEN);
                 }
-                interfaces.push_back(interf);
-            } else if (addr_family == AF_PACKET) {
-                interf.psuedonym = p_ifaddr->ifa_name;
-                interf.psuedonym += "_pk";
                 interfaces.push_back(interf);
             }
         }
@@ -89,131 +97,6 @@ std::vector<packet_data> packetLog = {};
 int logCap = 10;
 int maxCaptures = 100000;
 
-struct ether_data getEtherData(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
-    struct ether_header *p_eth = (struct ether_header *) packet;
-    struct ether_data edata;
-
-    edata.src = ether_ntoa((const struct ether_addr *)&p_eth->ether_shost);
-    edata.dest = ether_ntoa((const struct ether_addr *)&p_eth->ether_shost);
-    edata.type = p_eth->ether_type;
-
-    return edata;
-}
-/*
-struct ip_data getIPData(u_char *args,const struct pcap_pkthdr* pkthdr,const u_char* packet) {
-    const struct ip* ip;
-    struct ip_data ipdata;
-
-    ipdata.src = "NULL";
-    ipdata.dest = "NULL";
-
-    u_int hdrlen,off,version;
-    int i;
-    int len = ntohs(ip->ip_len);
-
-    u_int length = pkthdr-&len;
-    ip = (struct ip*)(packet + sizeof(struct ether_header));
-    length -= sizeof(struct ether_header); 
-
-    if (length < sizeof(struct ip)) {
-        ipdata.src = "BAD LENGTH";
-        ipdata.dest = "BAD LENGTH";
-        return ipdata;
-    }
-
-    hdrlen  = IP_HL(ip);
-    version = IP_V(ip);
-
-    ipdata.hdrlen = hdrlen;
-    ipdata.version = version;
-    ipdata.offset = off;
-
-    if (version != 4)
-    {
-        ipdata.src = "BAD VERSION";
-        ipdata.dest = "BAD VERSION";
-        return ipdata;
-    }
-
-    if (hdrlen < 5)
-    {
-        ipdata.src = "BAD HEADER LENGTH";
-        ipdata.dest = "BAD HEADER LENGTH";
-        return ipdata;
-    }
-
-    if (length < len) {
-        ipdata.src = "MISSING " + len - length + " BYTES";
-        ipdata.dest = "MISSING " + len - length + " BYTES";
-        return ipdata;
-        //len - length
-    }
-
-    off = ntohs(ip->ip_off);
-    if ((off &apm; 0x1fff) == 0 ) {
-        ipdata.src = inet_ntoa(ip->ip_src);
-        ipdata.dest = inet_ntoa(ip->ip_dst);
-    }
-    return ipdata;
-}
-*/
-u_char* handle_IP
-        (u_char *args,const struct pcap_pkthdr* pkthdr,const u_char*
-        packet)
-{
-    int len = = ntohs(ip->ip_len)
-    const struct my_ip* ip;
-    u_int length = pkthdr-&len;
-    u_int hlen,off,version;
-    int i;
-
-    /* jump pass the ethernet header */
-    ip = (struct my_ip*)(packet + sizeof(struct ether_header));
-    length -= sizeof(struct ether_header); 
-
-    /* check to see we have a packet of valid length */
-    if (length < sizeof(struct my_ip))
-    {
-        printf("truncated ip %d",length);
-        return NULL;
-    }
-
-    len     = ntohs(ip->ip_len);
-    hlen    = IP_HL(ip); /* header length */
-    version = IP_V(ip);/* ip version */
-
-    /* check version */
-    if(version != 4)
-    {
-      fprintf(stdout,"Unknown version %d\n",version);
-      return NULL;
-    }
-
-    /* check header length */
-    if(hlen < 5 )
-    {
-        fprintf(stdout,"bad-hlen %d \n",hlen);
-    }
-
-    /* see if we have as much packet as we should */
-    if(length < len)
-        printf("\ntruncated IP - %d bytes missing\n",len - length);
-
-    /* Check to see if we have the first fragment */
-    off = ntohs(ip->ip_off);
-    if((off &apm; 0x1fff) == 0 )/* aka no 1's in first 13 bits */
-    {/* print SOURCE DESTINATION hlen version len offset */
-        fprintf(stdout,"IP: ");
-        fprintf(stdout,"%s ",
-                inet_ntoa(ip->ip_src));
-        fprintf(stdout,"%s %d %d %d %d\n",
-                inet_ntoa(ip->ip_dst),
-                hlen,version,len,off);
-    }
-
-    return NULL;
-}
-
 
 void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     static int pckt_num = 0;
@@ -224,34 +107,100 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
     std::cout << "\n";
     for (int i = 0; i < packetLog.size(); ++i) {
         packet_data pack = packetLog[i];
-        printClamped(std::to_string(pack.index), 10, YELLOW);
-        printClamped(pack.eth.src, 20, GREEN);
-        printClamped(pack.eth.dest, 20, RED);
 
-        if(pack.eth.type == ETHERTYPE_IP) {
-            printClamped("ETH_IP(" + std::to_string(pack.eth.type) + ")", 20, CYAN);
-        } else if(pack.eth.type == ETHERTYPE_ARP) {
-            printClamped("ETH_ARP(" + std::to_string(pack.eth.type) + ")", 20, CYAN);
-        } else if(pack.eth.type == ETHERTYPE_REVARP) {
-            printClamped("ETH_REVAR(" + std::to_string(pack.eth.type) + ")", 20, CYAN);
+        printClamped(std::to_string(pack.index), 10, YELLOW);
+        printClamped(compileString(pack.eth->src, ETHER_ADDR_LEN), 20, GREEN);
+        printClamped(compileString(pack.eth->dest, ETHER_ADDR_LEN), 20, RED);
+
+        if(pack.eth->type == ETHERTYPE_IP) {
+            printClamped("ETH_IP(" + std::to_string(pack.eth->type) + ")", 20, CYAN);
+        } else if(pack.eth->type == ETHERTYPE_ARP) {
+            printClamped("ETH_ARP(" + std::to_string(pack.eth->type) + ")", 20, CYAN);
+        } else if(pack.eth->type == ETHERTYPE_REVARP) {
+            printClamped("ETH_REVAR(" + std::to_string(pack.eth->type) + ")", 20, CYAN);
         } else {
-            printClamped("UNKNOWN(" + std::to_string(pack.eth.type) + ")", 20, CYAN);
+            printClamped("UNKNOWN(" + std::to_string(pack.eth->type) + ")", 20, CYAN);
         }
+
+        if (pack.ipErr == "") {
+            printClamped(inet_ntoa(pack.ip->ip_src), 20, GREEN);
+            printClamped(inet_ntoa(pack.ip->ip_dst), 20, RED);
+        } else {
+            printClamped(pack.ipErr, 20, GREEN);
+            printClamped(pack.ipErr, 20, RED);
+        }
+        printClamped(std::to_string(pack.ipSize), 10, MAGENTA);
+
+        if (pack.tcpErr == "") {
+            printClamped(std::to_string(pack.tcp->th_sport), 20, GREEN);
+            printClamped(std::to_string(pack.tcp->th_dport), 20, RED);
+        } else {
+            printClamped(pack.tcpErr, 20, GREEN);
+            printClamped(pack.tcpErr, 20, RED);
+        }
+        printClamped(std::to_string(pack.tcpSize), 10, MAGENTA);
 
         std::cout << "\n";
     }
 
-    struct ether_data edata = getEtherData(args, pkthdr, packet);
+    // Get data for the new packet
+    struct packet_data       pdata;
+    struct ether_data *edata;
+    struct ip_data    *ipdata;
+    struct tcp_data   *tcpdata;
+    u_char              *payload;
+    
+    // Get Ethernet data
+    edata = (struct ether_data *)packet;
 
-    // Fill packet structure and add packet to temporary log
-    struct packet_data pdata;
+    // Get IP data
+    ipdata = (struct ip_data*)(packet + ETHER_HEADER_LEN);
+    u_int ipLen = IP_HL(ipdata)*4;
+    pdata.ipSize = ipLen;
+    if (ipLen < 20) {
+        pdata.ipErr = "BAD HEADER LENGTH";
+        pdata.tcpErr = "UNCALCULATED";
+        pdata.eth = edata;
+        pdata.ip = ipdata;
+        pdata.index = pckt_num;
+        packetLog.push_back(pdata);
+        if (packetLog.size() > logCap) {
+            packetLog.erase(packetLog.begin());
+        }
+        ++pckt_num;
+        return;
+    }
+
+    // Get TCP data
+    tcpdata = (struct tcp_data*)(packet + ETHER_HEADER_LEN + ipLen);
+    u_int tcpLen = TH_OFF(tcpdata)*4;
+    pdata.tcpSize = tcpLen;
+    if (tcpLen < 20) {
+        pdata.tcpErr = "BAD HEADER LENGTH";
+        pdata.eth = edata;
+        pdata.ip = ipdata;
+        pdata.index = pckt_num;
+        packetLog.push_back(pdata);
+        if (packetLog.size() > logCap) {
+            packetLog.erase(packetLog.begin());
+        }
+        ++pckt_num;
+        return;
+    }
+
+    // Calculate payload start position
+    payload = (u_char *)(packet + ETHER_HEADER_LEN + ipLen + tcpLen);
+    pdata.payload = payload;
+    pdata.payloadLen = pkthdr->len;
+    
+    // Fill complete packet structure and add packet to temporary log
     pdata.eth = edata;
+    pdata.ip = ipdata;
     pdata.index = pckt_num;
     packetLog.push_back(pdata);
     if (packetLog.size() > logCap) {
         packetLog.erase(packetLog.begin());
     }
-
     ++pckt_num;
 }
 
@@ -283,12 +232,10 @@ std::string selectInterface(struct interface *p_interfaces) {
 
     for (int i = 0; i < availInterfaces.size(); ++i) {
         struct interface interf = availInterfaces[i];
-        if (interf.sa_family == AF_INET) { // IPv4 address
+        if (interf.sa_family == AF_INET) { /* IPv4 address */
             std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
-        } else if (interf.sa_family == AF_INET6) { // IPv6 address
+        } else if (interf.sa_family == AF_INET6) { /* IPv6 address */
             std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv6: " << interf.ip_6 << ",\n\t\tNetmask: " << interf.nmsk_6 << "\n";
-        } else if (interf.sa_family == AF_PACKET) {
-            std::cout << "\tInterface \"" << interf.psuedonym << "\":\n";
         }
     }
 
