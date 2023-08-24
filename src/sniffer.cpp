@@ -35,7 +35,9 @@ void printHeaders() {
     printClamped("Ethernet Type", 20 , BLUE);
     printClamped("IP-Source", 20, BLUE);
     printClamped("IP-Destination",20, BLUE);
-    printClamped("Packet length",10, BLUE);
+    printClamped("Length",10, BLUE);
+    printClamped("TCP-source",20, BLUE);
+    printClamped("TCP-destination",20, BLUE);
 }
 
 
@@ -94,9 +96,19 @@ pcap_t *h_pcap;
 std::vector<packet_data> packetLog = {};
 
 // Packet display settings
-int logCap = 10;
+int logCap = 30;
 int maxCaptures = 100000;
 
+std::string etherToStr(u_char addr[ETHER_ADDR_LEN]) {
+    char macAddr[ETHER_ADDR_LEN];
+    for (size_t i = 0, pos = 0; i < ETHER_ADDR_LEN; i++) {
+        if(i > 0) {
+            macAddr[pos++] = ':';
+        }
+        sprintf(macAddr + pos, "%02x", (unsigned int)addr[i] & 0xffu);
+    }
+    return std::string(macAddr);
+}
 
 void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     static int pckt_num = 0;
@@ -105,12 +117,17 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
     system("clear");
     printHeaders();
     std::cout << "\n";
+
     for (int i = 0; i < packetLog.size(); ++i) {
         packet_data pack = packetLog[i];
 
         printClamped(std::to_string(pack.index), 10, YELLOW);
-        printClamped(compileString(pack.eth->src, ETHER_ADDR_LEN), 20, GREEN);
-        printClamped(compileString(pack.eth->dest, ETHER_ADDR_LEN), 20, RED);
+        
+        std::string etherSrc = etherToStr(pack.eth->src);
+        std::string etherDest = etherToStr(pack.eth->dest);
+        
+        printClamped(etherSrc, 20, GREEN);
+        printClamped(etherDest, 20, RED);
 
         if(pack.eth->type == ETHERTYPE_IP) {
             printClamped("ETH_IP(" + std::to_string(pack.eth->type) + ")", 20, CYAN);
@@ -129,7 +146,10 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
             printClamped(pack.ipErr, 20, GREEN);
             printClamped(pack.ipErr, 20, RED);
         }
-        printClamped(std::to_string(pack.ipSize), 10, MAGENTA);
+
+        // Seg fault here
+        int packLen = pkthdr->len;
+        printClamped(std::to_string(packLen), 10, MAGENTA);
 
         if (pack.tcpErr == "") {
             printClamped(std::to_string(pack.tcp->th_sport), 20, GREEN);
@@ -138,13 +158,11 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
             printClamped(pack.tcpErr, 20, GREEN);
             printClamped(pack.tcpErr, 20, RED);
         }
-        printClamped(std::to_string(pack.tcpSize), 10, MAGENTA);
-
         std::cout << "\n";
     }
 
     // Get data for the new packet
-    struct packet_data       pdata;
+    struct packet_data pdata;
     struct ether_data *edata;
     struct ip_data    *ipdata;
     struct tcp_data   *tcpdata;
@@ -207,7 +225,9 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
 void startCapture(struct interface interf) {
     system("clear");
     char errbuf[PCAP_ERRBUF_SIZE];
-    h_pcap = pcap_open_live(interf.name.c_str(),BUFSIZ,0,-1,errbuf);
+    char *ebuf = &errbuf[0];
+    // read timeout section https://www.tcpdump.org/manpages/pcap.3pcap.html
+    h_pcap = pcap_open_live(interf.name.c_str(),BUFSIZ,1,1000,ebuf);
     if (h_pcap == NULL) {
         std::cout << "pcap_open_live():" << errbuf;
         exit(1);
