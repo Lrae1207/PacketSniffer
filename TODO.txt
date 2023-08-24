@@ -1,4 +1,5 @@
 Important:
+    !!SEGMENTATION FAULT
     Fix MAC address parsing
     Add file writing and reading
 Not urgent:
