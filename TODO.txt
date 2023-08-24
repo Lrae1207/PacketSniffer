@@ -1,2 +1,6 @@
-Frontend:
-    Fix window section resizing
+Important:
+    Fix MAC address parsing
+    Add file writing and reading
+Not urgent:
+    Change old style casting to new style casting
+    Fix "availInterface" variable shadow
