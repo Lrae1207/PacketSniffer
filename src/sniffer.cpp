@@ -1,6 +1,4 @@
-//\usr\include\x86_64-linux-gnu\bits\socket.h
-//\usr\include\linux\if_arp.h
-//https://upload.wikimedia.org/wikipedia/commons/3/37/Netfilter-packet-flow.svg
+//-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Werror -Wno-unused
 #include "sniffer.hpp"
 #include "colors.hpp"
 #include <fstream>
@@ -18,7 +16,7 @@
 // Print n characters of buffer and fill any remaining space with ' 's
 void printClamped(std::string buffer, int n, std::string color) {
     std::cout << color;
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         if (i < buffer.size()) {
             std::cout << buffer[i];
         } else {
@@ -96,18 +94,20 @@ pcap_t *h_pcap;
 std::vector<packet_data> packetLog = {};
 
 // Packet display settings
-int logCap = 30;
+size_t logCap = 30;
 int maxCaptures = 100000;
 
 std::string etherToStr(u_char addr[ETHER_ADDR_LEN]) {
-    char macAddr[ETHER_ADDR_LEN];
-    for (size_t i = 0, pos = 0; i < ETHER_ADDR_LEN; i++) {
-        if(i > 0) {
-            macAddr[pos++] = ':';
-        }
-        sprintf(macAddr + pos, "%02x", (unsigned int)addr[i] & 0xffu);
+    std::string res;
+    char temp[ETHER_ADDR_LEN];
+    for (int i = 0; i < 4; ++i) {
+        sprintf(temp, "%X", (unsigned)addr[i]);
+        res += (std::string)(temp);
+        res += ":";
     }
-    return std::string(macAddr);
+    sprintf(temp, "%X", (unsigned)addr[5]);
+    res += (std::string)(temp);
+    return res;
 }
 
 void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
@@ -118,7 +118,7 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
     printHeaders();
     std::cout << "\n";
 
-    for (int i = 0; i < packetLog.size(); ++i) {
+    for (size_t i = 0; i < packetLog.size(); ++i) {
         packet_data pack = packetLog[i];
 
         printClamped(std::to_string(pack.index), 10, YELLOW);
@@ -239,7 +239,9 @@ void startCapture(struct interface interf) {
 }
 
 // Input loop helper functions
-void exitProgram() {
+
+// I can probably replace this
+inline void exitProgram() {
     std::cout << "Exiting program. Thank you for using it.\n";
     exit(0);
 }
@@ -250,7 +252,7 @@ std::string selectInterface(struct interface *p_interfaces) {
     std::vector<interface> availInterfaces = getInterfaces();
     struct interface selectedInterf;
 
-    for (int i = 0; i < availInterfaces.size(); ++i) {
+    for (size_t i = 0; i < availInterfaces.size(); ++i) {
         struct interface interf = availInterfaces[i];
         if (interf.sa_family == AF_INET) { /* IPv4 address */
             std::cout << "\tInterface \"" << interf.psuedonym << "\":\n\t\t" << "Ipv4: " << interf.ip_4 << ",\n\t\tNetmask: " << interf.nmsk_4 << "\n";
@@ -277,6 +279,8 @@ std::string selectInterface(struct interface *p_interfaces) {
             exitProgram();
         } else if (!isSelected && user_input == "interfaces") {
             std::cout << "Searching for interfaces...\n";
+
+            // Shadows over other local declaration of availInterfaces
             std::vector<struct interface> availInterfaces;
             availInterfaces = getInterfaces();
 
@@ -311,6 +315,7 @@ int main(int argc, char *argv[]) {
     bool running = true;
 
     while (running) {
+        // First condition may be unnecessary
         if (&selectedInterf == nullptr || interfaceName == "") {
             interfaceName = selectInterface(&selectedInterf);
         } else {
@@ -324,7 +329,7 @@ int main(int argc, char *argv[]) {
 
             // Split input by whitespace
             std::string temp = "";
-            for (int i = 0; i < userInput.size(); ++i) {
+            for (size_t i = 0; i < userInput.size(); ++i) {
                 if (userInput[i] == ' ' || userInput[i] == '\t') {
                     inputArgs.push_back(temp);
                     temp = "";
