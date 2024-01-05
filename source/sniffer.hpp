@@ -57,11 +57,26 @@ struct ip_data_6 {
 	u_char ipv6_hl; /* hop limit 8*/
 	struct in6_addr ipv6_src,ipv6_dst; /* source and destination */
 };
+#define IPV6MAXSTRINGLENGTH 39
 #define IPv6_V(ip)	(((ip)->ipv6_vtc & 0xf0) >> 4)
 
 struct ip_container {
-	ip_data ip_v4;
-	ip_data_6 ip_v6;
+	bool hasError = false;
+	std::string err = "";
+	ip_data *ip_v4 = nullptr;
+	ip_data_6 *ip_v6 = nullptr;
+};
+
+struct arp_data {
+	u_short arp_hd; /* hardware type 16 */
+	u_short arp_pt; /* protocol type 16 */
+	u_char arp_hl; /* header length 8 */
+	u_char arp_pl; /* protocol length 8 */
+	u_short arp_o; /* operation: 1.request; 2.reply 16 */
+	u_int arp_sh; /* source hardware address */
+	u_int arp_sp; /* source protocol address */
+	u_int arp_th; /* target hardware address */
+	u_int arp_tp; /* target protocol address */
 };
 
 struct tcp_data {
@@ -90,12 +105,8 @@ struct packet_data {
     int index;
 	int length;
     struct ether_data *eth; /* ETHERNET */
-    u_int ipSize; 			/* IP */
-    struct ip_data *ip;
-	std::string ipErr = "";
-    u_int tcpSize;			/* TCP */
-    struct tcp_data *tcp;
-	std::string tcpErr = "";
+	struct ip_container ip; /* IPv4 and IPv6 */
+	struct arp_data *arpInfo = nullptr;
 	u_char *payload;		/* PAYLOAD */
 	u_int payloadLen;
 };
