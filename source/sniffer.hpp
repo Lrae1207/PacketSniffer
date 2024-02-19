@@ -40,31 +40,40 @@ struct ip_data {
 #define IP_MF 0x2000		/* more fragments flag */
 #define IP_OFFMASK 0x1fff	/* mask for fragmenting bits */
 	u_char ip_ttl;		/* time to live */
-	u_char ip_p;		/* protocol */
+	// protocols https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+	u_char ip_p;		/* protocol; whether the next header is tcp,udp... */
 	u_short ip_sum;		/* checksum */
 	struct in_addr ip_src,ip_dst; /* source and dest address */
 };
 #define IP_V(ip)	(((ip)->ip_vhl & 0xf0) >> 4)
 #define IP_HL(ip)	((ip)->ip_vhl & 0x0f)
 
+#define IPV6_HEADER_SIZE 320
 // Based on: https://en.wikipedia.org/wiki/IPv6_packet#Fixed_header
 struct ip_data_6 {
 	u_char ipv6_vtc; /* version 4 | traffic class 4 */
 	u_char ipv6_tcfl; /* second part of traffic class 4 | flow label 4 */
 	u_short ipv6_fl; /* second part of flow label 16 */
 	u_short ipv6_pl; /* payload length 16 */
-	u_char ipv6_next; /* next header 8 */
+	// protocols https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+	u_char ipv6_next; /* next header 8; whether the next header is tcp,udp... */
 	u_char ipv6_hl; /* hop limit 8*/
 	struct in6_addr ipv6_src,ipv6_dst; /* source and destination */
 };
-#define IPV6MAXSTRINGLENGTH 39
+#define IPV6MAXSTRINGLENGTH 40
 #define IPv6_V(ip)	(((ip)->ipv6_vtc & 0xf0) >> 4)
 
 struct ip_container {
-	bool hasError = false;
-	std::string err = "";
 	ip_data *ip_v4 = nullptr;
 	ip_data_6 *ip_v6 = nullptr;
+};
+
+struct trans_protocol {
+	u_int protocol_num;
+	void *protocol_data;
+#define TP_ICMP 0
+#define TP_TCP 6
+#define TP_UDP 17
 };
 
 struct arp_data {
@@ -101,13 +110,15 @@ struct tcp_data {
 	u_short th_urp;		/* urgent pointer */
 };
 
+
 struct packet_data {
     int index;
 	int length;
-    struct ether_data *eth; /* ETHERNET */
-	struct ip_container ip; /* IPv4 and IPv6 */
-	struct arp_data *arpInfo = nullptr;
-	u_char *payload;		/* PAYLOAD */
+	std::string err = "";
+    struct ether_data *eth = nullptr; /* ETHERNET */
+	struct ip_container *ip = nullptr; /* IPv4 and IPv6 */
+	struct trans_protocol *tp = nullptr; /* Transport Layer Protocol */
+	u_char *payload = nullptr;		/* PAYLOAD */
 	u_int payloadLen;
 };
 
@@ -121,3 +132,4 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr, const u_ch
 void startCapture(struct interface interf);
 void exitProgram();
 std::string selectInterface(struct interface *p_interfaces);
+packet_data *getPacketData(const struct pcap_pkthdr* pkthdr, const u_char* packet, int pckt_num);
