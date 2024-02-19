@@ -25,7 +25,7 @@ fi
 
 echo Compiling...
 
-g++ sniffer.cpp sniffer.hpp colors.hpp -lpcap -o "execfile"
+g++ colors.hpp sniffer.hpp sniffer.cpp -lpcap -o "execfile"
 
 if [ $? -eq 0 ]:
 then
